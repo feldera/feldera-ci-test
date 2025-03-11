@@ -28,7 +28,9 @@ RUN apt update --fix-missing && apt install \
   # To add the nodesource debian repository
   ca-certificates gnupg \
   # Required by the `metrics-exporter-tcp` crate
-  protobuf-compiler
+  protobuf-compiler \
+  # Required by docker build
+  sudo
 
 # Set UTF-8 locale. Needed for the Rust compiler to handle Unicode column names.
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
@@ -50,7 +52,7 @@ COPY build/sql2dbsp-jar-with-dependencies.jar lib/sql-to-dbsp-compiler/SQL-compi
 # Minimal image for running the pipeline manager
 FROM prebuilt AS release
 
-RUN mkdir -p /sccache && chown -R ubuntu:ubuntu /sccache
+RUN sudo mkdir -p /sccache && sudo chown -R ubuntu:ubuntu /sccache
 # Copy over `Cargo.lock` into home directory (copied overriding at each pipeline Rust compilation)
 COPY --chown=ubuntu Cargo.lock Cargo.lock
 
