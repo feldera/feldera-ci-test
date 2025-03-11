@@ -119,7 +119,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            --mount=type=cache,target=/sccache
             RUSTC_WRAPPER=${{ env.RUSTC_WRAPPER }}
             SCCACHE_DIR=${{ env.SCCACHE_DIR }}
 
