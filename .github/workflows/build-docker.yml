@@ -78,6 +78,9 @@ jobs:
         with:
           name: feldera-sql-compiler
           path: build
+          run-id: 13743474555
+          # Token is only needed when run-id is set
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Remove if https://github.com/actions/upload-artifact/issues/38 ever gets fixed
       - name: Make binaries executable
