@@ -6,6 +6,7 @@ on:
 env:
   CARGO_FLAGS: "--release --locked --all-targets --features pubsub-emulator-test,iceberg-tests-fs,iceberg-tests-glue"
   FELDERA_PLATFORM_VERSION_SUFFIX: ${{ github.sha }}
+  RUSTC_WRAPPER: sccache
 
 jobs:
   build-rust:
@@ -25,7 +26,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
 
     container:
-      image: ghcr.io/feldera/feldera-dev:0a775f772b2ebde13708744d3e6a219ca4a492d2
+      image: ghcr.io/feldera/feldera-dev:a9b1688f32cbdf0c33c1dbccc79c3934917d98e0
       options: --user=ubuntu
 
     steps:
