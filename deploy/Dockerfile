@@ -76,8 +76,17 @@ RUN arch=`dpkg --print-architecture | sed "s/arm64/aarch64/g" | sed "s/amd64/x86
 ENV PATH="$PATH:/home/ubuntu/.cargo/bin:/home/ubuntu/mold/bin"
 ENV RUSTFLAGS="-C link-arg=-fuse-ld=mold"
 
+# Install sccache
+RUN  arch=`dpkg --print-architecture | sed "s/arm64/aarch64/g" | sed "s/amd64/x86_64/g"`; \
+  cd /home/ubuntu && curl -LO https://github.com/mozilla/sccache/releases/download/v0.10.0/sccache-v0.10.0-$arch-unknown-linux-musl.tar.gz \
+  && tar zxvf sccache-v0.10.0-$arch-unknown-linux-musl.tar.gz \
+  && cp sccache-v0.10.0-$arch-unknown-linux-musl/sccache /home/ubuntu/.cargo/bin \
+  && chmod +x /home/ubuntu/.cargo/bin/sccache
+
 # Run the precompile phase to speed up Rust compilations during deployment
 RUN ./pipeline-manager --bind-address=0.0.0.0 --sql-compiler-home=/home/ubuntu/lib/sql-to-dbsp-compiler --compilation-cargo-lock-path=/home/ubuntu/Cargo.lock --dbsp-override-path=/home/ubuntu/lib --precompile
 RUN ./pipeline-manager --bind-address=0.0.0.0 --sql-compiler-home=/home/ubuntu/lib/sql-to-dbsp-compiler --compilation-cargo-lock-path=/home/ubuntu/Cargo.lock --dbsp-override-path=/home/ubuntu/lib --preinstall-pg-embed
+# Print sccache stats for precompile phase
+RUN sccache --show-stats
 ENV BANNER_ADDR=localhost
 ENTRYPOINT ["./pipeline-manager", "--bind-address=0.0.0.0", "--sql-compiler-home=/home/ubuntu/lib/sql-to-dbsp-compiler", "--compilation-cargo-lock-path=/home/ubuntu/Cargo.lock", "--dbsp-override-path=/home/ubuntu/lib", "--demos-dir", "/home/ubuntu/demos"]

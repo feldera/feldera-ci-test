@@ -2,6 +2,9 @@ name: Build and Publish Docker Image
 
 on:
   workflow_call:
+  push:
+    branches:
+      - test-cache
 
 permissions:
   contents: read
@@ -9,6 +12,8 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
+  RUSTC_WRAPPER: sccache
+  SCCACHE_DIR: /sccache
 
 # This would be easier if we could just build all platforms in one job, but
 # building the ARM version on x86 is very slow due to the pre-compile step we do
@@ -24,7 +29,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - runner: [self-hosted, skylake40]
+          - runner: [self-hosted, skylake40, sccache]
             rust_target: x86_64-unknown-linux-gnu
             docker_arch: amd64
             docker_platform: linux/amd64
@@ -34,9 +39,29 @@ jobs:
             docker_platform: linux/arm64
     runs-on: ${{ matrix.runner }}
 
+    container:
+      image: ghcr.io/feldera/feldera-dev:a9b1688f32cbdf0c33c1dbccc79c3934917d98e0
+      options: --user=ubuntu
+      volumes:
+        - /sccache:/sccache
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Set sccache storage for blacksmith runners
+        if: ${{ startsWith(matrix.runner, 'blacksmith') }}
+        run: |
+          unset SCCACHE_DIR
+          echo "SCCACHE_GHA_ENABLED=on" >> $GITHUB_ENV
+
+      - name: Configure sccache for blacksmith runners
+        if: ${{ startsWith(matrix.runner, 'blacksmith') }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
       - name: Download Binaries
         id: binaries
@@ -44,9 +69,9 @@ jobs:
         with:
           name: feldera-binaries-${{ matrix.rust_target }}
           path: build
-          #run-id: ${{ inputs.run-id }}
+          run-id: 13797907930
           # Token is only needed when run-id is set
-          #github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download Compiler Binaries
         uses: actions/download-artifact@v4

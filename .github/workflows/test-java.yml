@@ -6,6 +6,7 @@ on:
 env:
   # The cache doesn't help here because the tests always run under temp/src/lib.rs
   # and the cache key is based file path, hence it gets overridden for every new test
+  # You'll also need to disable the incremental build in temp/Cargo.toml
   RUSTC_WRAPPER: sccache
   SCCACHE_DIR: /sccache
   SCCACHE_CACHE_SIZE: 3072G
@@ -13,7 +14,7 @@ env:
 jobs:
   java-tests:
     name: Execute Java Tests
-    runs-on: [self-hosted, skylake40]
+    runs-on: [self-hosted, skylake40, sccache]
     container:
       image: ghcr.io/feldera/feldera-dev:a9b1688f32cbdf0c33c1dbccc79c3934917d98e0
       options: --user=ubuntu
