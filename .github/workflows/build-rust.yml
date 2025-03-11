@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - runner: [self-hosted, skylake40]
+          - runner: [self-hosted, skylake40, sccache]
             arch: x86_64
             target: x86_64-unknown-linux-gnu
           - runner: blacksmith-16vcpu-ubuntu-2204-arm
@@ -38,9 +38,6 @@ jobs:
       # https://github.com/actions/runner/issues/863
       - name: Rustup set default toolchain
         run: rustup default stable
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
 
       - name: Build Rust binaries
         run: |
