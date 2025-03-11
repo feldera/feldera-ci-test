@@ -37,8 +37,6 @@ ENV LC_ALL=en_US.UTF-8
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 
-RUN mkdir -p /sccache && chown -R ubuntu:ubuntu /sccache
-
 # This user has the same UID and GID (1000) as the ci user on the machines so it helps with
 # permissions when mounting volumes
 USER ubuntu
@@ -52,6 +50,7 @@ COPY build/sql2dbsp-jar-with-dependencies.jar lib/sql-to-dbsp-compiler/SQL-compi
 # Minimal image for running the pipeline manager
 FROM prebuilt AS release
 
+RUN sudo mkdir -p /sccache && sudo chown -R ubuntu:ubuntu /sccache
 # Copy over `Cargo.lock` into home directory (copied overriding at each pipeline Rust compilation)
 COPY --chown=ubuntu Cargo.lock Cargo.lock
 
