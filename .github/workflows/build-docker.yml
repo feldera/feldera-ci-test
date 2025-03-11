@@ -63,7 +63,7 @@ jobs:
         with:
           name: feldera-binaries-${{ matrix.rust_target }}
           path: build
-          run-id: 13743474555
+          run-id: 13797907930
           # Token is only needed when run-id is set
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -72,7 +72,7 @@ jobs:
         with:
           name: feldera-sql-compiler
           path: build
-          run-id: 13743474555
+          run-id: 13797907930
           # Token is only needed when run-id is set
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -120,6 +120,8 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             --mount=type=cache,target=/sccache
+            RUSTC_WRAPPER=${{ env.RUSTC_WRAPPER }}
+            SCCACHE_DIR=${{ env.SCCACHE_DIR }}
 
       - name: Export digest
         run: |
