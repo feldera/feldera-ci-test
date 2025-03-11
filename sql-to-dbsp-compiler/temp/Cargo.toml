@@ -49,6 +49,6 @@ datafusion-sql = { git = "https://github.com/ryzhyk/datafusion.git", rev = "f561
 path = "src/lib.rs"
 doctest = false
 
-# Incremental builds sometimes crash the Rust compiler
+# if sccache is used in the tests, disable incremental builds
 #[profile.test]
 #incremental = false

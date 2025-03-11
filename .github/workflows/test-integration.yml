@@ -9,7 +9,7 @@ jobs:
     name: Integration Tests
     runs-on: [self-hosted, skylake40]
     container:
-      image: ghcr.io/feldera/feldera-dev:0a775f772b2ebde13708744d3e6a219ca4a492d2
+      image: ghcr.io/feldera/feldera-dev:a9b1688f32cbdf0c33c1dbccc79c3934917d98e0
 
     services:
       pipeline-manager:
