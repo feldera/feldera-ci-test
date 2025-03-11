@@ -52,6 +52,7 @@ FROM prebuilt AS release
 
 # Copy over `Cargo.lock` into home directory (copied overriding at each pipeline Rust compilation)
 COPY --chown=ubuntu Cargo.lock Cargo.lock
+RUN mkdir -p /sccache && chown -R ubuntu:ubuntu /sccache
 
 # Copy over demos
 RUN mkdir -p demos
