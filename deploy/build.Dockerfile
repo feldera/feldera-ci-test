@@ -1,16 +1,11 @@
 # This Dockerfile is used by CI to build things.
 #
-# To build the image, run:
-#    docker build -f build.Dockerfile -t ghcr.io/gz/feldera-dev:latest .
-#
-# To inspect the image locally, run:
-#    docker run -it ghcr.io/gz/feldera-dev:latest
-#
-# To push the image to GitHub Container Registry, run:
-#    docker push ghcr.io/gz/feldera-dev:latest
+# The image is built by the `build-docker-dev.yml` action
+# whenever it changes. But you'll have to change the sha in
+# other actions that rely on this image if you want to use
+# a newer version of it.
 
-# The build image contains tools to build the code given that
-# we need a Java and Rust compiler to run alongside the pipeline manager
+# We need a Java and Rust compiler to run alongside the pipeline manager
 # as of now. This will change later.
 FROM ubuntu:24.04 AS base
 ENV DEBIAN_FRONTEND=noninteractive
@@ -70,11 +65,11 @@ ENV PATH="/home/ubuntu/.local/bin:/home/ubuntu/.bun/bin:/home/ubuntu/.cargo/bin:
 # Install rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.83.0
 
-## Install uv
+# Install uv
 RUN curl -LsSf https://astral.sh/uv/0.6.5/install.sh | sh
 RUN uv python install 3.10
 
-## Install Bun.js
+# Install Bun.js
 RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.2.2"
 
 # The download URL for mold uses x86_64/aarch64 whereas dpkg --print-architecture says amd64/arm64
@@ -83,6 +78,13 @@ RUN arch=`dpkg --print-architecture | sed "s/arm64/aarch64/g" | sed "s/amd64/x86
     && tar -xzvf mold-2.32.1-$arch-linux.tar.gz \
     && mv mold-2.32.1-$arch-linux /home/ubuntu/mold \
     && rm mold-2.32.1-$arch-linux.tar.gz
+
+# Install sccache
+RUN  arch=`dpkg --print-architecture | sed "s/arm64/aarch64/g" | sed "s/amd64/x86_64/g"`; \
+    cd /home/ubuntu && curl -LO https://github.com/mozilla/sccache/releases/download/v0.10.0/sccache-v0.10.0-$arch-unknown-linux-musl.tar.gz \
+    && tar zxvf sccache-v0.10.0-$arch-unknown-linux-musl.tar.gz \
+    && cp sccache-v0.10.0-$arch-unknown-linux-musl/sccache /home/ubuntu/.cargo/bin \
+    && chmod +x /home/ubuntu/.cargo/bin/sccache
 
 ENV RUSTFLAGS="-C link-arg=-fuse-ld=mold"
 RUN rustup default stable
