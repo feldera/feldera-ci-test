@@ -39,12 +39,6 @@ jobs:
             docker_platform: linux/arm64
     runs-on: ${{ matrix.runner }}
 
-    container:
-      image: ghcr.io/feldera/feldera-dev:a9b1688f32cbdf0c33c1dbccc79c3934917d98e0
-      options: --user=ubuntu
-      volumes:
-        - /sccache:/sccache
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -124,6 +118,8 @@ jobs:
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            --mount=type=cache,target=/sccache
 
       - name: Export digest
         run: |
