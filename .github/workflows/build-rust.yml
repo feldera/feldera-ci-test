@@ -17,14 +17,14 @@ jobs:
     strategy:
       matrix:
         include:
-          - runner: [self-hosted, skylake40]
+          - runner: [self-hosted, skylake40, sccache]
             arch: x86_64
             target: x86_64-unknown-linux-gnu
             sccache_size: 3072G
           - runner: blacksmith-16vcpu-ubuntu-2204-arm
             arch: aarch64
             target: aarch64-unknown-linux-gnu
-            sccache_size: 100G
+            sccache_size: 5G
     runs-on: ${{ matrix.runner }}
 
     container:
@@ -37,12 +37,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Mount sccache directory on blacksmith runner
+      - name: Set sccache storage for blacksmith runners
         if: ${{ startsWith(matrix.runner, 'blacksmith') }}
-        uses: useblacksmith/stickydisk@v1
+        run: |
+          unset SCCACHE_DIR
+          echo "SCCACHE_GHA_ENABLED=on" >> $GITHUB_ENV
+
+      - name: Configure sccache for blacksmith runners
+        if: ${{ startsWith(matrix.runner, 'blacksmith') }}
+        uses: actions/github-script@v7
         with:
-          key: ${{ github.repository }}-sccache
-          path: /sccache
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
       - name: Set sccache size environment variable
         run: |
