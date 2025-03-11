@@ -37,19 +37,18 @@ ENV LC_ALL=en_US.UTF-8
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 
-# Minimal image for running the pipeline manager
-FROM base AS release
-
-RUN mkdir -p /sccache && chown -R ubuntu:ubuntu /sccache
-
 # This user has the same UID and GID (1000) as the ci user on the machines so it helps with
 # permissions when mounting volumes
 USER ubuntu
 WORKDIR /home/ubuntu
 
+FROM base AS prebuilt
 COPY build/pipeline-manager pipeline-manager
 RUN mkdir -p lib/sql-to-dbsp-compiler/SQL-compiler/target
 COPY build/sql2dbsp-jar-with-dependencies.jar lib/sql-to-dbsp-compiler/SQL-compiler/target/sql2dbsp-jar-with-dependencies.jar
+
+# Minimal image for running the pipeline manager
+FROM prebuilt AS release
 
 # Copy over `Cargo.lock` into home directory (copied overriding at each pipeline Rust compilation)
 COPY --chown=ubuntu Cargo.lock Cargo.lock
@@ -87,7 +86,8 @@ RUN  arch=`dpkg --print-architecture | sed "s/arm64/aarch64/g" | sed "s/amd64/x8
   && chmod +x /home/ubuntu/.cargo/bin/sccache
 
 # Run the precompile phase to speed up Rust compilations during deployment
-RUN --mount=type=cache,target=/sccache ./pipeline-manager --bind-address=0.0.0.0 --sql-compiler-home=/home/ubuntu/lib/sql-to-dbsp-compiler --compilation-cargo-lock-path=/home/ubuntu/Cargo.lock --dbsp-override-path=/home/ubuntu/lib --precompile
+# The uid and gid are set to match the ubuntu user (https://github.com/moby/buildkit/issues/1237)
+RUN --mount=type=cache,target=/sccache,uid=1000,gid=1000 ./pipeline-manager --bind-address=0.0.0.0 --sql-compiler-home=/home/ubuntu/lib/sql-to-dbsp-compiler --compilation-cargo-lock-path=/home/ubuntu/Cargo.lock --dbsp-override-path=/home/ubuntu/lib --precompile
 RUN ./pipeline-manager --bind-address=0.0.0.0 --sql-compiler-home=/home/ubuntu/lib/sql-to-dbsp-compiler --compilation-cargo-lock-path=/home/ubuntu/Cargo.lock --dbsp-override-path=/home/ubuntu/lib --preinstall-pg-embed
 # Print sccache stats for precompile phase
 RUN sccache --show-stats
