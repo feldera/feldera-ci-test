@@ -87,7 +87,7 @@ RUN  arch=`dpkg --print-architecture | sed "s/arm64/aarch64/g" | sed "s/amd64/x8
 
 # Run the precompile phase to speed up Rust compilations during deployment
 # The uid and gid are set to match the ubuntu user (https://github.com/moby/buildkit/issues/1237)
-RUN --mount=type=bind,src={SCCACHE_DIR},dst=${SCCACHE_DIR},uid=1000,gid=1000 ./pipeline-manager --bind-address=0.0.0.0 --sql-compiler-home=/home/ubuntu/lib/sql-to-dbsp-compiler --compilation-cargo-lock-path=/home/ubuntu/Cargo.lock --dbsp-override-path=/home/ubuntu/lib --precompile && sccache --show-stats
+RUN --mount=type=bind,src={SCCACHE_DIR},dst=${SCCACHE_DIR} ./pipeline-manager --bind-address=0.0.0.0 --sql-compiler-home=/home/ubuntu/lib/sql-to-dbsp-compiler --compilation-cargo-lock-path=/home/ubuntu/Cargo.lock --dbsp-override-path=/home/ubuntu/lib --precompile && sccache --show-stats
 RUN ./pipeline-manager --bind-address=0.0.0.0 --sql-compiler-home=/home/ubuntu/lib/sql-to-dbsp-compiler --compilation-cargo-lock-path=/home/ubuntu/Cargo.lock --dbsp-override-path=/home/ubuntu/lib --preinstall-pg-embed
 ENV BANNER_ADDR=localhost
 ENTRYPOINT ["./pipeline-manager", "--bind-address=0.0.0.0", "--sql-compiler-home=/home/ubuntu/lib/sql-to-dbsp-compiler", "--compilation-cargo-lock-path=/home/ubuntu/Cargo.lock", "--dbsp-override-path=/home/ubuntu/lib", "--demos-dir", "/home/ubuntu/demos"]
