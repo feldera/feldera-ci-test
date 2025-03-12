@@ -284,12 +284,32 @@ async fn attempt_end_to_end_rust_compilation(
     Ok(true)
 }
 
+/// Calculates sha256 checksum for source code.
+fn calculate_source_checksum(
+    main_rust: &str,
+    udf_stubs: &str,
+    udf_rust: &str,
+    udf_toml: &str,
+) -> String {
+    let mut hasher = sha::Sha256::new();
+    for data in [
+        main_rust.as_bytes(),
+        udf_stubs.as_bytes(),
+        udf_rust.as_bytes(),
+        udf_toml.as_bytes(),
+    ] {
+        let checksum = sha256(data);
+        hasher.update(&checksum);
+    }
+    hex::encode(hasher.finish())
+}
+
 /// Calculates sha256 checksum across the fields.
 /// It is calculated using: `H(H(field1) || H(field2) || ...)`.
 /// `H(x)` is the hashing function. `||` represents concatenation.
 /// The order of the fields is always the same.
 #[allow(clippy::too_many_arguments)]
-fn calculate_source_checksum(
+fn calculate_binary_checksum(
     platform_version: &str,
     profile: &CompilationProfile,
     config: &CompilerConfig,
@@ -310,6 +330,7 @@ fn calculate_source_checksum(
         // - config.binary_ref_host (prior compilations are expected to remain valid)
         // - config.binary_ref_port (prior compilations are expected to remain valid)
         // - program_config.cache
+        ("platform_version", platform_version.as_bytes()),
         ("profile", profile.to_string().as_bytes()),
         (
             "config.compiler_working_directory",
@@ -455,7 +476,8 @@ pub async fn perform_rust_compilation(
         .unwrap_or(config.compilation_profile.clone());
 
     // Calculate source checksum across fields
-    let source_checksum = calculate_source_checksum(
+    let source_checksum = calculate_source_checksum(&main_rust, &udf_stubs, udf_rust, udf_toml);
+    let binary_checksum = calculate_binary_checksum(
         platform_version,
         &profile,
         config,
@@ -465,14 +487,14 @@ pub async fn perform_rust_compilation(
         udf_rust,
         udf_toml,
     );
-    trace!("Rust compilation: calculated source checksum: {source_checksum}");
+    trace!("Rust compilation: calculated checksums: {source_checksum} {binary_checksum}");
 
-    // The compilation is cached if cache is enabled AND a binary exists with that source checksum
+    // The compilation is cached if cache is enabled AND a binary exists with that binary checksum
     let binaries_dir = config
         .working_dir()
         .join("rust-compilation")
         .join("binaries");
-    let binary_file_path = binaries_dir.join(format!("project-{source_checksum}"));
+    let binary_file_path = binaries_dir.join(format!("project-{binary_checksum}"));
     let is_cached = program_config.cache && binary_file_path.exists() && binary_file_path.is_file();
     let compilation_info = if !is_cached {
         // No cached binary exists: perform compilation
@@ -497,6 +519,7 @@ pub async fn perform_rust_compilation(
             program_version,
             config,
             &source_checksum,
+            &binary_checksum,
             &profile,
         )
         .await?
@@ -789,6 +812,7 @@ impl Drop for ProcessGroupTerminator {
 }
 
 /// Calls the compiler on the project with the provided source checksum and using the compilation profile.
+#[allow(clippy::too_many_arguments)]
 async fn call_compiler(
     db: Option<Arc<Mutex<StoragePostgres>>>,
     tenant_id: TenantId,
@@ -796,6 +820,7 @@ async fn call_compiler(
     program_version: Version,
     config: &CompilerConfig,
     source_checksum: &str,
+    binary_checksum: &str,
     profile: &CompilationProfile,
 ) -> Result<RustCompilationInfo, RustCompilationError> {
     // Pre-existing project directory
@@ -958,7 +983,7 @@ async fn call_compiler(
             hex::encode(sha256(&read_file_content_bytes(&source_file_path).await?));
 
         // Destination file
-        let target_file_path = binaries_dir.join(format!("project-{source_checksum}"));
+        let target_file_path = binaries_dir.join(format!("project-{binary_checksum}"));
         if target_file_path.exists() {
             info!(
                 "Target binary file '{}' already exists: overriding it",
@@ -972,14 +997,14 @@ async fn call_compiler(
                     formatdoc! {"
                     \n
                     The newly generated binary which is about to override a binary from a prior
-                    compilation has the same source checksum as the prior binary, however it has
+                    compilation has the same binary checksum as the prior binary, however it has
                     a different integrity checksum:
-                      > Source checksum............ {source_checksum}
+                      > Binary checksum............ {binary_checksum}
                       > New integrity checksum..... {source_file_integrity_checksum}
                       > Prior integrity checksum... {existing_target_file_integrity_checksum}
 
                     This might be caused by the Cargo.lock having changed in the meanwhile,
-                    or another change which was not covered by the source checksum.
+                    or another change which was not covered by the binary checksum.
                 "}
                 );
             }
@@ -1309,7 +1334,7 @@ async fn cleanup_rust_compilation(
 #[cfg(test)]
 mod test {
     use crate::compiler::rust_compiler::{
-        calculate_source_checksum, decide_cleanup, prepare_project,
+        calculate_binary_checksum, decide_cleanup, prepare_project,
     };
     use crate::compiler::rust_compiler::{prepare_workspace, MAIN_FUNCTION};
     use crate::compiler::test::{list_content_as_sorted_names, CompilerTest};
@@ -1400,7 +1425,7 @@ mod test {
             content,
             content
         ) {
-            let source_checksum = calculate_source_checksum(
+            let source_checksum = calculate_binary_checksum(
                 platform_version,
                 &profile,
                 &config,
@@ -1418,7 +1443,7 @@ mod test {
         }
 
         // Calling with the same input yields the same checksum
-        let checksum1 = calculate_source_checksum(
+        let checksum1 = calculate_binary_checksum(
             "v0",
             &CompilationProfile::Optimized,
             &config_1,
@@ -1428,7 +1453,7 @@ mod test {
             "udf_rust",
             "udf_toml",
         );
-        let checksum2 = calculate_source_checksum(
+        let checksum2 = calculate_binary_checksum(
             "v0",
             &CompilationProfile::Optimized,
             &config_1,
@@ -1441,7 +1466,7 @@ mod test {
         assert_eq!(checksum1, checksum2);
 
         // Program configuration currently does not impact the checksum
-        let checksum1 = calculate_source_checksum(
+        let checksum1 = calculate_binary_checksum(
             "v0",
             &CompilationProfile::Optimized,
             &config_1,
@@ -1454,7 +1479,7 @@ mod test {
             "udf_rust",
             "udf_toml",
         );
-        let checksum2 = calculate_source_checksum(
+        let checksum2 = calculate_binary_checksum(
             "v0",
             &CompilationProfile::Optimized,
             &config_1,
