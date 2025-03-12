@@ -65,6 +65,12 @@ jobs:
           key: ${{ github.repository }}-sccache
           path: ${{ env.SCCACHE_DISK }}
 
+      - name: Create sccache directory on blacksmith runner (in case it doesn't exist)
+        if: ${{ startsWith(matrix.runner, 'blacksmith') }}
+        run: |
+          mkdir -p ${{ github.workspace }}/sccache-disk/sccache
+          ls -la ${{ github.workspace }}/sccache-disk
+
       - name: Download Binaries
         id: binaries
         uses: actions/download-artifact@v4
