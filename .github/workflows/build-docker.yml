@@ -65,11 +65,13 @@ jobs:
           key: ${{ github.repository }}-sccache
           path: ${{ env.SCCACHE_DISK }}
 
+      # docker complains if we mount something that doesn't exist, so we create the directory
       - name: Create sccache directory on blacksmith runner (in case it doesn't exist)
         if: ${{ startsWith(matrix.runner, 'blacksmith') }}
         run: |
-          mkdir -p ${{ github.workspace }}/sccache-disk/sccache
-          ls -la ${{ github.workspace }}/sccache-disk
+          mkdir -p ${{ env.SCCACHE_DIR }}
+          ls -la ${{ env.SCCACHE_DISK }}
+          ls -la ${{ env.SCCACHE_DIR }}
 
       - name: Download Binaries
         id: binaries
@@ -135,6 +137,7 @@ jobs:
           build-args: |
             RUSTC_WRAPPER=${{ env.RUSTC_WRAPPER }}
             SCCACHE_DIR=${{ env.SCCACHE_DIR }}
+            SCCACHE_CACHE_SIZE=${{ env.SCCACHE_CACHE_SIZE }}
           # It's not clear what's the best cache strategy. GHA caching seems to be very slow (>10min)
           # so it's faster not to cache at all, but there are many other strategies including local dir
           #cache-from: type=registry,ref=user/app

@@ -8,6 +8,7 @@ ARG TARGETOS
 ARG TARGETARCH
 ARG RUSTC_WRAPPER
 ARG SCCACHE_DIR
+ARG SCCACHE_CACHE_SIZE
 
 # These two environment variables are used to make openssl-sys pick
 # up libssl-dev and statically link it. Without it, our build defaults
