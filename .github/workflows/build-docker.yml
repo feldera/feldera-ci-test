@@ -110,7 +110,7 @@ jobs:
           # checkout out earlier that also has the artifacts (!?)
           context: .
           build-contexts: |
-            cache=/sccache
+            cache=${{ env.SCCACHE_DIR }}
           file: deploy/Dockerfile
           platforms: ${{ matrix.docker_platform }}
           labels: ${{ steps.meta.outputs.labels }}
