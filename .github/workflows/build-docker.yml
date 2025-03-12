@@ -2,9 +2,9 @@ name: Build and Publish Docker Image
 
 on:
   workflow_call:
-  push:
-    branches:
-      - test-cache
+  #push:
+  #  branches:
+  #    - test-cache
 
 permissions:
   contents: read
@@ -79,18 +79,18 @@ jobs:
         with:
           name: feldera-binaries-${{ matrix.rust_target }}
           path: build
-          run-id: 13797907930
+          #run-id: 13821248353
           # Token is only needed when run-id is set
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          #github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download Compiler Binaries
         uses: actions/download-artifact@v4
         with:
           name: feldera-sql-compiler
           path: build
-          run-id: 13797907930
+          #run-id: 13821248353
           # Token is only needed when run-id is set
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          #github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Remove if https://github.com/actions/upload-artifact/issues/38 ever gets fixed
       - name: Make binaries executable
