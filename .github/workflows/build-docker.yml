@@ -104,6 +104,8 @@ jobs:
           # `context` is somehow important to set, otherwise the build will use it's own git checkout instead of the one
           # checkout out earlier that also has the artifacts (!?)
           context: .
+          build-contexts: |
+            cache=/sccache
           file: deploy/Dockerfile
           platforms: ${{ matrix.docker_platform }}
           labels: ${{ steps.meta.outputs.labels }}
