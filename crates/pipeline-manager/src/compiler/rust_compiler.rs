@@ -310,7 +310,6 @@ fn calculate_source_checksum(
         // - config.binary_ref_host (prior compilations are expected to remain valid)
         // - config.binary_ref_port (prior compilations are expected to remain valid)
         // - program_config.cache
-        ("platform_version", platform_version.as_bytes()),
         ("profile", profile.to_string().as_bytes()),
         (
             "config.compiler_working_directory",
