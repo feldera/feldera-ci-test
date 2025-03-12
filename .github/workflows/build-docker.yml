@@ -49,17 +49,21 @@ jobs:
         run: |
           echo "SCCACHE_DIR=/sccache" >> $GITHUB_ENV
           echo "SCCACHE_CACHE_SIZE=${{ matrix.sccache_size }}" >> $GITHUB_ENV
-      - name: Mount sccache directory on blacksmith runner
+
+      # We don't have permission to put this in /sccache, so we create a directory in the workspace
+      - name: Figure out sccache directory path on blacksmith runner
         if: ${{ startsWith(matrix.runner, 'blacksmith') }}
         run: |
-          echo "SCCACHE_DIR=${{ github.workspace }}/sccache" >> $GITHUB_ENV
+          mkdir -p ${{ github.workspace }}/sccache-disk
+          echo "SCCACHE_DISK=${{ github.workspace }}/sccache-disk/" >> $GITHUB_ENV
+          echo "SCCACHE_DIR=${{ github.workspace }}/sccache-disk/sccache" >> $GITHUB_ENV
 
       - name: Mount sccache directory on blacksmith runner
         if: ${{ startsWith(matrix.runner, 'blacksmith') }}
         uses: useblacksmith/stickydisk@v1
         with:
           key: ${{ github.repository }}-sccache
-          path: ${{ env.SCCACHE_DIR }}
+          path: ${{ env.SCCACHE_DISK }}
 
       - name: Download Binaries
         id: binaries
