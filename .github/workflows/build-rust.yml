@@ -20,11 +20,11 @@ jobs:
           - runner: [self-hosted, skylake40, sccache]
             arch: x86_64
             target: x86_64-unknown-linux-gnu
-            sccache_size: 3072G
+            sccache_size: 1024G
           - runner: blacksmith-16vcpu-ubuntu-2204-arm
             arch: aarch64
             target: aarch64-unknown-linux-gnu
-            sccache_size: 5G
+            sccache_size: 5G # Adjust this once we can use stickydisk
     runs-on: ${{ matrix.runner }}
 
     container:
@@ -37,6 +37,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Can't use stickydisk here because the action runs in a `container` section
+      # I did report this as a bug to blacksmith.sh
       - name: Set sccache storage for blacksmith runners
         if: ${{ startsWith(matrix.runner, 'blacksmith') }}
         run: |

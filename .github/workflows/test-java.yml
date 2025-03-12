@@ -9,7 +9,7 @@ env:
   # You'll also need to disable the incremental build in temp/Cargo.toml
   RUSTC_WRAPPER: sccache
   SCCACHE_DIR: /sccache
-  SCCACHE_CACHE_SIZE: 3072G
+  SCCACHE_CACHE_SIZE: 1024G
 
 jobs:
   java-tests:

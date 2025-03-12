@@ -33,10 +33,12 @@ jobs:
             rust_target: x86_64-unknown-linux-gnu
             docker_arch: amd64
             docker_platform: linux/amd64
-          #- runner: blacksmith-16vcpu-ubuntu-2204-arm
-          #  rust_target: aarch64-unknown-linux-gnu
-          #  docker_arch: arm64
-          #  docker_platform: linux/arm64
+            sccache_size: 1024G
+          - runner: blacksmith-16vcpu-ubuntu-2204-arm
+            rust_target: aarch64-unknown-linux-gnu
+            docker_arch: arm64
+            docker_platform: linux/arm64
+            sccache_size: 50G
     runs-on: ${{ matrix.runner }}
 
     steps:
@@ -49,6 +51,10 @@ jobs:
         with:
           key: ${{ github.repository }}-sccache
           path: /sccache
+
+      - name: Set sccache size environment variable
+        run: |
+          echo "SCCACHE_CACHE_SIZE=${{ matrix.sccache_size }}" >> $GITHUB_ENV
 
       - name: Download Binaries
         id: binaries
@@ -111,11 +117,13 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ vars.FELDERA_IMAGE_NAME }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           build-args: |
             RUSTC_WRAPPER=${{ env.RUSTC_WRAPPER }}
             SCCACHE_DIR=${{ env.SCCACHE_DIR }}
+          # It's not clear what's the best cache strategy. GHA caching seems to be very slow (>10min)
+          # so it's faster not to cache at all, but there are many other strategies including local dir
+          #cache-from: type=registry,ref=user/app
+          #cache-to: type=gha,mode=max
 
       - name: Export digest
         run: |
