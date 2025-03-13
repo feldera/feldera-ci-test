@@ -39,7 +39,9 @@ RUN apt-get update --fix-missing && apt-get install -y \
     # Required for bun installation
     unzip \
     # For debugging things
-    strace
+    strace \
+    # For blacksmith runners configuring disks
+    sudo
 
 # Install redpanda's rpk cli
 RUN arch=`dpkg --print-architecture`; \
