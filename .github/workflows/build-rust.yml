@@ -10,7 +10,6 @@ env:
   FELDERA_PLATFORM_VERSION_SUFFIX: ${{ github.sha }}
   RUSTC_WRAPPER: sccache
   SCCACHE_DIR: /sccache
-  # Relevant for blacksmith runners/stickydisk action only:
   BLACKSMITH_SCCACHE_DISK: /mnt/sccache-disk
   VM_ID: ${{ env.VM_ID }}
   GITHUB_REPO_NAME: ${{ env.GITHUB_REPO_NAME }}
@@ -46,7 +45,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # We don't have permission to put this in /sccache, so we create a directory
+      # We can't put it in /sccache because it's a volume mount already in the self-hosted runner
       - name: Figure out sccache directory path on blacksmith runner
         if: ${{ startsWith(matrix.runner, 'blacksmith') }}
         run: |
