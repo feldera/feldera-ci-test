@@ -5,6 +5,18 @@ on:
   push:
     branches:
       - test-cache
+env:
+  CARGO_FLAGS: "--release --locked --all-targets --features pubsub-emulator-test,iceberg-tests-fs,iceberg-tests-glue"
+  FELDERA_PLATFORM_VERSION_SUFFIX: ${{ github.sha }}
+  RUSTC_WRAPPER: sccache
+  SCCACHE_DIR: /sccache
+  # Relevant for blacksmith runners/stickydisk action only:
+  BLACKSMITH_SCCACHE_DISK: /mnt/sccache-disk
+  VM_ID: ${{ env.VM_ID }}
+  GITHUB_REPO_NAME: ${{ env.GITHUB_REPO_NAME }}
+  BLACKSMITH_STICKYDISK_TOKEN: ${{ env.BLACKSMITH_STICKYDISK_TOKEN }}
+  BLACKSMITH_INSTALLATION_MODEL_ID: ${{ env.BLACKSMITH_INSTALLATION_MODEL_ID }}
+  BLACKSMITH_REGION: ${{ env.BLACKSMITH_REGION }}
 
 jobs:
   build-rust:
@@ -29,35 +41,24 @@ jobs:
       options: --user=ubuntu --privileged
       volumes:
         - /sccache:/sccache
-      env:
-        CARGO_FLAGS: "--release --locked --all-targets --features pubsub-emulator-test,iceberg-tests-fs,iceberg-tests-glue"
-        FELDERA_PLATFORM_VERSION_SUFFIX: ${{ github.sha }}
-        RUSTC_WRAPPER: sccache
-        SCCACHE_DIR: /sccache
-        # Relevant for blacksmith runners/stickydisk action only:
-        VM_ID: ${{ env.VM_ID }}
-        GITHUB_REPO_NAME: ${{ env.GITHUB_REPO_NAME }}
-        BLACKSMITH_STICKYDISK_TOKEN: ${{ env.BLACKSMITH_STICKYDISK_TOKEN }}
-        BLACKSMITH_INSTALLATION_MODEL_ID: ${{ env.BLACKSMITH_INSTALLATION_MODEL_ID }}
-        BLACKSMITH_REGION: ${{ env.BLACKSMITH_REGION }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # We don't have permission to put this in /sccache, so we create a directory in the workspace
+      # We don't have permission to put this in /sccache, so we create a directory
       - name: Figure out sccache directory path on blacksmith runner
         if: ${{ startsWith(matrix.runner, 'blacksmith') }}
         run: |
-          mkdir -p ${{ github.workspace }}/sccache-disk
-          echo "SCCACHE_DISK=${{ github.workspace }}/sccache-disk/" >> $GITHUB_ENV
-          echo "SCCACHE_DIR=${{ github.workspace }}/sccache-disk/sccache" >> $GITHUB_ENV
+          sudo mkdir -p ${{ env.BLACKSMITH_SCCACHE_DISK }}
+          sudo chown ubuntu:ubuntu -R ${{ env.BLACKSMITH_SCCACHE_DISK }}
+          echo "SCCACHE_DIR=${{ env.BLACKSMITH_SCCACHE_DISK }}/sccache" >> $GITHUB_ENV
       - name: Mount sccache directory on blacksmith runner
         if: ${{ startsWith(matrix.runner, 'blacksmith') }}
         uses: useblacksmith/stickydisk@v1
         with:
           key: ${{ github.repository }}-sccache
-          path: ${{ env.SCCACHE_DISK }}
+          path: ${{ env.BLACKSMITH_SCCACHE_DISK }}
 
       - name: Set sccache size environment variable
         run: |
