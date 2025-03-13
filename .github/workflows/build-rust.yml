@@ -6,8 +6,6 @@ on:
     branches:
       - test-cache
 
-env:
-
 jobs:
   build-rust:
     name: Build Rust Binaries
