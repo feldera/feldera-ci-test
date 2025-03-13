@@ -5,17 +5,6 @@ on:
   push:
     branches:
       - test-cache
-env:
-  CARGO_FLAGS: "--release --locked --all-targets --features pubsub-emulator-test,iceberg-tests-fs,iceberg-tests-glue"
-  FELDERA_PLATFORM_VERSION_SUFFIX: ${{ github.sha }}
-  RUSTC_WRAPPER: sccache
-  SCCACHE_DIR: /sccache
-  BLACKSMITH_SCCACHE_DISK: /mnt/sccache-disk
-  VM_ID: ${{ env.VM_ID }}
-  GITHUB_REPO_NAME: ${{ env.GITHUB_REPO_NAME }}
-  BLACKSMITH_STICKYDISK_TOKEN: ${{ env.BLACKSMITH_STICKYDISK_TOKEN }}
-  BLACKSMITH_INSTALLATION_MODEL_ID: ${{ env.BLACKSMITH_INSTALLATION_MODEL_ID }}
-  BLACKSMITH_REGION: ${{ env.BLACKSMITH_REGION }}
 
 jobs:
   build-rust:
@@ -40,6 +29,17 @@ jobs:
       options: --user=ubuntu --privileged
       volumes:
         - /sccache:/sccache
+      env:
+        CARGO_FLAGS: "--release --locked --all-targets --features pubsub-emulator-test,iceberg-tests-fs,iceberg-tests-glue"
+        FELDERA_PLATFORM_VERSION_SUFFIX: ${{ github.sha }}
+        RUSTC_WRAPPER: sccache
+        SCCACHE_DIR: /sccache
+        BLACKSMITH_SCCACHE_DISK: /mnt/sccache-disk
+        VM_ID: ${{ env.VM_ID }}
+        GITHUB_REPO_NAME: ${{ env.GITHUB_REPO_NAME }}
+        BLACKSMITH_STICKYDISK_TOKEN: ${{ env.BLACKSMITH_STICKYDISK_TOKEN }}
+        BLACKSMITH_INSTALLATION_MODEL_ID: ${{ env.BLACKSMITH_INSTALLATION_MODEL_ID }}
+        BLACKSMITH_REGION: ${{ env.BLACKSMITH_REGION }}
 
     steps:
       - name: Checkout repository
