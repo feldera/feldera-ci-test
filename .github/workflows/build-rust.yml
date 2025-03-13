@@ -25,7 +25,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
 
     container:
-      image: ghcr.io/feldera/feldera-dev:7f6a5f94dc8bf29b1a84fc45fc2c1030f951f427
+      image: ghcr.io/feldera/feldera-dev:3012ef118aaaa2b7d49e1dfeda938288a70ba66c
       options: --user=ubuntu --privileged
       volumes:
         - /sccache:/sccache
