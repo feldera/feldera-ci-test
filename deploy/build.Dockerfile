@@ -43,6 +43,10 @@ RUN apt-get update --fix-missing && apt-get install -y \
     # For blacksmith runners configuring disks
     sudo
 
+# Give ubuntu user with sudo privileges for mounting dirs in blacksmith runner
+RUN usermod -aG sudo ubuntu
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
 # Install redpanda's rpk cli
 RUN arch=`dpkg --print-architecture`; \
     curl -LO https://github.com/redpanda-data/redpanda/releases/latest/download/rpk-linux-$arch.zip \
