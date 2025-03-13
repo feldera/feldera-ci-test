@@ -21,10 +21,10 @@ jobs:
     strategy:
       matrix:
         include:
-          #- runner: [self-hosted, skylake40, sccache]
-          #  arch: x86_64
-          #  target: x86_64-unknown-linux-gnu
-          #  sccache_size: 1024G
+          - runner: [self-hosted, skylake40, sccache]
+            arch: x86_64
+            target: x86_64-unknown-linux-gnu
+            sccache_size: 1024G
           - runner: blacksmith-16vcpu-ubuntu-2204-arm
             arch: aarch64
             target: aarch64-unknown-linux-gnu
