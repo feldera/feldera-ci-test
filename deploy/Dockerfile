@@ -6,6 +6,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 ARG TARGETOS
 ARG TARGETARCH
+ARG RUSTC_WRAPPER
+ARG SCCACHE_DIR
+ARG SCCACHE_CACHE_SIZE
 
 # These two environment variables are used to make openssl-sys pick
 # up libssl-dev and statically link it. Without it, our build defaults
@@ -76,8 +79,18 @@ RUN arch=`dpkg --print-architecture | sed "s/arm64/aarch64/g" | sed "s/amd64/x86
 ENV PATH="$PATH:/home/ubuntu/.cargo/bin:/home/ubuntu/mold/bin"
 ENV RUSTFLAGS="-C link-arg=-fuse-ld=mold"
 
+# Install sccache
+RUN  arch=`dpkg --print-architecture | sed "s/arm64/aarch64/g" | sed "s/amd64/x86_64/g"`; \
+  cd /home/ubuntu && curl -LO https://github.com/mozilla/sccache/releases/download/v0.10.0/sccache-v0.10.0-$arch-unknown-linux-musl.tar.gz \
+  && tar zxvf sccache-v0.10.0-$arch-unknown-linux-musl.tar.gz \
+  && cp sccache-v0.10.0-$arch-unknown-linux-musl/sccache /home/ubuntu/.cargo/bin \
+  && chmod +x /home/ubuntu/.cargo/bin/sccache
+
 # Run the precompile phase to speed up Rust compilations during deployment
-RUN ./pipeline-manager --bind-address=0.0.0.0 --sql-compiler-home=/home/ubuntu/lib/sql-to-dbsp-compiler --compilation-cargo-lock-path=/home/ubuntu/Cargo.lock --dbsp-override-path=/home/ubuntu/lib --precompile
+# The uid and gid are set to match the ubuntu user (https://github.com/moby/buildkit/issues/1237)
+# https://stackoverflow.com/questions/71564600/can-i-persist-yarn-install-cache-during-docker-build-using-run-mount-type-bind
+# https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#run---mounttypebind
+RUN --mount=type=cache,target=${SCCACHE_DIR},from=cache,uid=1000,gid=1000 ./pipeline-manager --bind-address=0.0.0.0 --sql-compiler-home=/home/ubuntu/lib/sql-to-dbsp-compiler --compilation-cargo-lock-path=/home/ubuntu/Cargo.lock --dbsp-override-path=/home/ubuntu/lib --precompile && sccache --show-stats
 RUN ./pipeline-manager --bind-address=0.0.0.0 --sql-compiler-home=/home/ubuntu/lib/sql-to-dbsp-compiler --compilation-cargo-lock-path=/home/ubuntu/Cargo.lock --dbsp-override-path=/home/ubuntu/lib --preinstall-pg-embed
 ENV BANNER_ADDR=localhost
 ENTRYPOINT ["./pipeline-manager", "--bind-address=0.0.0.0", "--sql-compiler-home=/home/ubuntu/lib/sql-to-dbsp-compiler", "--compilation-cargo-lock-path=/home/ubuntu/Cargo.lock", "--dbsp-override-path=/home/ubuntu/lib", "--demos-dir", "/home/ubuntu/demos"]

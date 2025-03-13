@@ -2,6 +2,9 @@ name: Build and Publish Docker Image
 
 on:
   workflow_call:
+  push:
+    branches:
+      - test-cache
 
 permissions:
   contents: read
@@ -9,6 +12,8 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
+  RUSTC_WRAPPER: sccache
+  SCCACHE_DIR: /sccache
 
 # This would be easier if we could just build all platforms in one job, but
 # building the ARM version on x86 is very slow due to the pre-compile step we do
@@ -24,19 +29,49 @@ jobs:
     strategy:
       matrix:
         include:
-          - runner: [self-hosted, skylake40]
+          - runner: [self-hosted, skylake40, sccache]
             rust_target: x86_64-unknown-linux-gnu
             docker_arch: amd64
             docker_platform: linux/amd64
+            sccache_size: 1024G
           - runner: blacksmith-16vcpu-ubuntu-2204-arm
             rust_target: aarch64-unknown-linux-gnu
             docker_arch: arm64
             docker_platform: linux/arm64
+            sccache_size: 50G
     runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Set sccache size environment variable
+        run: |
+          echo "SCCACHE_DIR=/sccache" >> $GITHUB_ENV
+          echo "SCCACHE_CACHE_SIZE=${{ matrix.sccache_size }}" >> $GITHUB_ENV
+
+      # We don't have permission to put this in /sccache, so we create a directory in the workspace
+      - name: Figure out sccache directory path on blacksmith runner
+        if: ${{ startsWith(matrix.runner, 'blacksmith') }}
+        run: |
+          mkdir -p ${{ github.workspace }}/sccache-disk
+          echo "SCCACHE_DISK=${{ github.workspace }}/sccache-disk/" >> $GITHUB_ENV
+          echo "SCCACHE_DIR=${{ github.workspace }}/sccache-disk/sccache" >> $GITHUB_ENV
+
+      - name: Mount sccache directory on blacksmith runner
+        if: ${{ startsWith(matrix.runner, 'blacksmith') }}
+        uses: useblacksmith/stickydisk@v1
+        with:
+          key: ${{ github.repository }}-sccache
+          path: ${{ env.SCCACHE_DISK }}
+
+      # docker complains if we mount something that doesn't exist, so we create the directory
+      - name: Create sccache directory on blacksmith runner (in case it doesn't exist)
+        if: ${{ startsWith(matrix.runner, 'blacksmith') }}
+        run: |
+          mkdir -p ${{ env.SCCACHE_DIR }}
+          ls -la ${{ env.SCCACHE_DISK }}
+          ls -la ${{ env.SCCACHE_DIR }}
 
       - name: Download Binaries
         id: binaries
@@ -44,15 +79,18 @@ jobs:
         with:
           name: feldera-binaries-${{ matrix.rust_target }}
           path: build
-          #run-id: ${{ inputs.run-id }}
+          run-id: 13823020183
           # Token is only needed when run-id is set
-          #github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download Compiler Binaries
         uses: actions/download-artifact@v4
         with:
           name: feldera-sql-compiler
           path: build
+          run-id: 13823020183
+          # Token is only needed when run-id is set
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Remove if https://github.com/actions/upload-artifact/issues/38 ever gets fixed
       - name: Make binaries executable
@@ -89,13 +127,21 @@ jobs:
           # `context` is somehow important to set, otherwise the build will use it's own git checkout instead of the one
           # checkout out earlier that also has the artifacts (!?)
           context: .
+          build-contexts: |
+            cache=${{ env.SCCACHE_DIR }}
           file: deploy/Dockerfile
           platforms: ${{ matrix.docker_platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ vars.FELDERA_IMAGE_NAME }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          build-args: |
+            RUSTC_WRAPPER=${{ env.RUSTC_WRAPPER }}
+            SCCACHE_DIR=${{ env.SCCACHE_DIR }}
+            SCCACHE_CACHE_SIZE=${{ env.SCCACHE_CACHE_SIZE }}
+          # It's not clear what's the best cache strategy. GHA caching seems to be very slow (>10min)
+          # so it's faster not to cache at all, but there are many other strategies including local dir
+          #cache-from: type=registry,ref=user/app
+          #cache-to: type=gha,mode=max
 
       - name: Export digest
         run: |
