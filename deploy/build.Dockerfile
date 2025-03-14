@@ -67,6 +67,8 @@ ENV CC=gcc-13
 USER ubuntu
 ENV PATH="/home/ubuntu/.local/bin:/home/ubuntu/.bun/bin:/home/ubuntu/.cargo/bin:/home/ubuntu/mold/bin:$PATH"
 
+RUN cargo install cargo-machete@0.7.0 cargo-edit@0.13.1
+
 # Install rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.83.0
 
