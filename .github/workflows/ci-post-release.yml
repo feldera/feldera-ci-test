@@ -8,9 +8,11 @@ jobs:
   publish-python:
     name: ""
     uses: ./.github/workflows/publish-python.yml
+    secrets: inherit
   publish-crates:
     name: ""
     uses: ./.github/workflows/publish-crates.yml
+    secrets: inherit
   adjust-versions:
     runs-on: [ubuntu-latest]
     container:
@@ -43,4 +45,4 @@ jobs:
           git diff
       - uses: EndBug/add-and-commit@v9 # You can change this to use a specific version.
         with:
-          message: "Bump versions to $NEXT_VERSION"
+          message: "ci: Bump versions to $NEXT_VERSION"
