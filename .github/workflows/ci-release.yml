@@ -43,17 +43,17 @@ jobs:
 
       - name: Attach version to binaries
         run: |
-          mv feldera-binaries-aarch64-unknown-linux-gnu.zip feldera-binaries-v${CURRENT_VERSION}-aarch64-unknown-linux-gnu.zip
-          mv feldera-binaries-x86_64-unknown-linux-gnu.zip feldera-binaries-v${CURRENT_VERSION}-x86_64-unknown-linux-gnu.zip
-          mv feldera-sql-compiler.zip feldera-sql-compiler-v${CURRENT_VERSION}.zip
+          mv feldera-binaries-aarch64-unknown-linux-gnu.zip feldera-binaries-v${{ env.CURRENT_VERSION }}-aarch64-unknown-linux-gnu.zip
+          mv feldera-binaries-x86_64-unknown-linux-gnu.zip feldera-binaries-v${{ env.CURRENT_VERSION }}-x86_64-unknown-linux-gnu.zip
+          mv feldera-sql-compiler.zip feldera-sql-compiler-v${{ env.CURRENT_VERSION }}.zip
 
       - name: Release on GitHub
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${CURRENT_VERSION}
+          tag_name: v${{ env.CURRENT_VERSION }}
           generate_release_notes: true
           make_latest: true
           files: |
-            feldera-binaries-v${CURRENT_VERSION}-aarch64-unknown-linux-gnu.zip
-            feldera-binaries-v${CURRENT_VERSION}-x86_64-unknown-linux-gnu.zip
-            feldera-sql-compiler-v${CURRENT_VERSION}.zip
+            feldera-binaries-v${{ env.CURRENT_VERSION }}-aarch64-unknown-linux-gnu.zip
+            feldera-binaries-v${{ env.CURRENT_VERSION }}-x86_64-unknown-linux-gnu.zip
+            feldera-sql-compiler-v${{ env.CURRENT_VERSION }}.zip
