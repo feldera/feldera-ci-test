@@ -4,9 +4,6 @@ on:
   workflow_call:
   workflow_dispatch:
 
-env:
-  CARGO_PUBLISH_FLAGS: "--dry-run"
-
 jobs:
   deploy:
     runs-on: [self-hosted, skylake40]
@@ -19,8 +16,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run cargo publish
         run: |
-          cargo publish  ${{ env.CARGO_PUBLISH_FLAGS }} --package feldera-types
-          cargo publish  ${{ env.CARGO_PUBLISH_FLAGS }} --package feldera-storage
-          cargo publish  ${{ env.CARGO_PUBLISH_FLAGS }} --package dbsp
-          cargo publish  ${{ env.CARGO_PUBLISH_FLAGS }} --package fda
-          cargo publish  ${{ env.CARGO_PUBLISH_FLAGS }} --package feldera-sqllib
+          cargo publish ${{ env.CARGO_PUBLISH_FLAGS }} --package feldera-types
+          cargo publish ${{ env.CARGO_PUBLISH_FLAGS }} --package feldera-storage
+          cargo publish ${{ env.CARGO_PUBLISH_FLAGS }} --package dbsp
+          cargo publish ${{ env.CARGO_PUBLISH_FLAGS }} --package fda
+          cargo publish ${{ env.CARGO_PUBLISH_FLAGS }} --package feldera-sqllib
