@@ -16,7 +16,7 @@ jobs:
   adjust-versions:
     runs-on: [self-hosted, skylake40]
     container:
-      image: ghcr.io/feldera/feldera-dev:7217ddac83a36a020b733cd7f650825349d351e3
+      image: ghcr.io/feldera/feldera-dev:39c1b55d0972ccd26375cf2f7cbc8554f4609da8
       options: --user=ubuntu
     needs: [publish-crates, publish-python]
     steps:
