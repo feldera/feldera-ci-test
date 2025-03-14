@@ -21,9 +21,9 @@ jobs:
     needs: [publish-crates, publish-python]
     steps:
       - uses: actions/checkout@v4
-      # The docker container when executed in the action runs with a different home directory
-      # than we set in the dev container (?), hence this step is necessary (sigh)
-      # https://github.com/actions/runner/issues/863
+        with:
+          # This runs on main because we make the commit on main at the end of the workflow
+          ref: main
       - name: Rustup set default toolchain
         run: rustup default stable
       - name: Determine current version based on pipeline-manager
@@ -48,6 +48,6 @@ jobs:
       - name: List changes
         run: |
           git diff
-      - uses: EndBug/add-and-commit@v9 # You can change this to use a specific version.
+      - uses: EndBug/add-and-commit@v9
         with:
           message: "ci: Prepare for v${{ env.NEXT_VERSION }}"
