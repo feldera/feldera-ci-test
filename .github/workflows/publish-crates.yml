@@ -14,6 +14,13 @@ jobs:
         - /sccache:/sccache
     steps:
       - uses: actions/checkout@v4
+
+      # The docker container when executed in the action runs with a different home directory
+      # than we set in the dev container (?), hence this step is necessary (sigh)
+      # https://github.com/actions/runner/issues/863
+      - name: Rustup set default toolchain
+        run: rustup default stable
+
       - name: Run cargo publish
         run: |
           cargo publish ${{ env.CARGO_PUBLISH_FLAGS }} --package feldera-types
