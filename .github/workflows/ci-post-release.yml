@@ -1,0 +1,46 @@
+name: Post Release Tasks
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish-python:
+    name: ""
+    uses: ./.github/workflows/publish-python.yml
+  publish-crates:
+    name: ""
+    uses: ./.github/workflows/publish-crates.yml
+  adjust-versions:
+    runs-on: [ubuntu-latest]
+    container:
+      image: ghcr.io/feldera/feldera-dev:39c1b55d0972ccd26375cf2f7cbc8554f4609da8
+      options: --user=ubuntu
+    needs: [publish-crates, publish-python]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Determine current version based on pipeline-manager
+        run: |
+          echo "CURRENT_VERSION=$(cargo metadata --no-deps | jq -r '.packages[]|select(.name == "pipeline-manager")|.version')" >> $GITHUB_OUTPUT
+      - name: Bump cargo versions
+        run: |
+          cargo set-version --bump ${{ var.RELEASE_NEXT_VERSION }} -p feldera-types
+          cargo set-version --bump ${{ var.RELEASE_NEXT_VERSION }} -p feldera-storage
+          cargo set-version --bump ${{ var.RELEASE_NEXT_VERSION }} -p dbsp
+          cargo set-version --bump ${{ var.RELEASE_NEXT_VERSION }} -p fda
+          cargo set-version --bump ${{ var.RELEASE_NEXT_VERSION }} -p pipeline-manager
+          cargo set-version --bump ${{ var.RELEASE_NEXT_VERSION }} -p feldera-sqllib
+      - name: Determine next version based on pipeline-manager
+        run: |
+          echo "NEXT_VERSION=$(cargo metadata --no-deps | jq -r '.packages[]|select(.name == "pipeline-manager")|.version')" >> $GITHUB_OUTPUT
+      - name: Adjust python versions
+        working-directory: ./python
+        run: |
+          sed -i.backup "s/version = \"${CURRENT_VERSION}\"/version = \"${NEXT_VERSION}\"/g" pyproject.toml
+          uv sync
+      - name: List changes
+        run: |
+          git diff
+      - uses: EndBug/add-and-commit@v9 # You can change this to use a specific version.
+        with:
+          message: "Bump versions to $NEXT_VERSION"
