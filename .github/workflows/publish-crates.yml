@@ -2,6 +2,9 @@ name: Upload crates.io packages
 
 on:
   workflow_call:
+    secrets:
+      CARGO_REGISTRY_TOKEN:
+        required: true
   workflow_dispatch:
 
 jobs:
@@ -28,3 +31,5 @@ jobs:
           cargo publish ${{ env.CARGO_PUBLISH_FLAGS }} --package dbsp
           cargo publish ${{ env.CARGO_PUBLISH_FLAGS }} --package fda
           cargo publish ${{ env.CARGO_PUBLISH_FLAGS }} --package feldera-sqllib
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
