@@ -32,6 +32,14 @@ jobs:
           # we use the token so it can circument push to main protection rules
           ref: main
           token: ${{ secrets.CI_RELEASE }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ vars.FELDERA_IMAGE_NAME }}
+
+
       - name: Rustup set default toolchain
         run: rustup default stable
       - name: Determine current version based on pipeline-manager
