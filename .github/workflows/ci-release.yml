@@ -7,7 +7,7 @@ on:
         description: "SHA to release (a recent commit from main that hasn't been released yet)"
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     env:
       SHA_TO_RELEASE: ${{ github.event.inputs.sha || github.sha }}
