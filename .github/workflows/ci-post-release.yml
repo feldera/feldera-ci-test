@@ -59,7 +59,6 @@ jobs:
       - uses: EndBug/add-and-commit@v9
         with:
           message: "ci: Prepare for v${{ env.NEXT_VERSION }}"
-          branch: main
           author_name: feldera-ci
           author_email: feldera-ci-noreply@feldera.io
           push: origin main
