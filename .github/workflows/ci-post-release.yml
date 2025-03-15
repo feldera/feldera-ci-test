@@ -36,7 +36,7 @@ jobs:
         run: rustup default stable
       - name: Determine current version based on pipeline-manager
         run: |
-          echo "CURRENT_VERSION=$(cargo metadata --no-deps | jq -r '.packages[]|select(.name == "pipeline-manager")|.version')" >> $GITHUB_OUTPUT
+          echo "CURRENT_VERSION=$(cargo metadata --no-deps | jq -r '.packages[]|select(.name == "pipeline-manager")|.version')" >> $GITHUB_ENV
       - name: Bump cargo versions
         run: |
           cargo set-version --bump ${{ vars.RELEASE_NEXT_VERSION }} -p feldera-types
@@ -47,7 +47,7 @@ jobs:
           cargo set-version --bump ${{ vars.RELEASE_NEXT_VERSION }} -p feldera-sqllib
       - name: Determine next version based on pipeline-manager
         run: |
-          echo "NEXT_VERSION=$(cargo metadata --no-deps | jq -r '.packages[]|select(.name == "pipeline-manager")|.version')" >> $GITHUB_OUTPUT
+          echo "NEXT_VERSION=$(cargo metadata --no-deps | jq -r '.packages[]|select(.name == "pipeline-manager")|.version')" >> $GITHUB_ENV
       - name: Adjust python version
         working-directory: ./python
         run: |
