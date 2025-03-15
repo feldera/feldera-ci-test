@@ -51,7 +51,7 @@ jobs:
       - name: Adjust python version
         working-directory: ./python
         run: |
-          sed -i.backup "s/version = \"${{ env.CURRENT_VERSION }}\"/version = \"${{ env.NEXT_VERSION }}\"/g" pyproject.toml
+          sed -i "s/version = \"${{ env.CURRENT_VERSION }}\"/version = \"${{ env.NEXT_VERSION }}\"/g" pyproject.toml
           uv sync
       - name: List changes
         run: |
