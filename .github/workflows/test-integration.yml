@@ -4,6 +4,11 @@ name: Integration Tests
 on:
   workflow_call:
 
+env:
+  RUSTC_WRAPPER: sccache
+  SCCACHE_DIR: /sccache
+  SCCACHE_CACHE_SIZE: 1024G
+
 jobs:
   manager-tests:
     name: Integration Tests
@@ -19,6 +24,8 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        volumes:
+          - "/sccache:/sccache"
 
     steps:
       - name: Download Test Binaries
@@ -50,3 +57,7 @@ jobs:
         env:
           FELDERA_BASE_URL: http://pipeline-manager:8080
           PYTHONPATH: ${{ github.workspace }}/python
+
+      - name: Print sccache stats
+        run: |
+          sccache --show-stats

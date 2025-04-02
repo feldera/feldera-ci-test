@@ -880,15 +880,21 @@ async fn call_compiler(
     let env_path = std::env::var_os("PATH").ok_or(RustCompilationError::SystemError(
         "The PATH environment variable is not set, which is needed to locate `cargo`".to_string(),
     ))?;
-    let optional_env_rustflags = std::env::var_os("RUSTFLAGS");
-
     // Formulate command
     let mut command = Command::new("cargo");
     command.env_clear();
     command.env("PATH", env_path);
-    if let Some(env_rustflags) = optional_env_rustflags {
-        command.env("RUSTFLAGS", env_rustflags);
+    for var_name in [
+        "RUSTFLAGS",
+        "RUSTC_WRAPPER",
+        "SCCACHE_DIR",
+        "SCCACHE_CACHE_SIZE",
+    ] {
+        if let Some(val) = std::env::var_os(var_name) {
+            command.env(var_name, val);
+        }
     }
+
     command
         // Set compiler stack size to 20MB (10x the default) to prevent
         // SIGSEGV when the compiler runs out of stack on large programs.
