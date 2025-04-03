@@ -16,8 +16,8 @@ jobs:
 
     services:
       pipeline-manager:
-        #image: ${{ vars.FELDERA_IMAGE_NAME }}:sha-${{ github.sha }}
-        image: ${{ vars.FELDERA_IMAGE_NAME }}:sha-c8477120ec9e0f244d5b2a987ef69b8674173ca9
+        image: ${{ vars.FELDERA_IMAGE_NAME }}:sha-${{ github.sha }}
+        #image: ${{ vars.FELDERA_IMAGE_NAME }}:sha-c8477120ec9e0f244d5b2a987ef69b8674173ca9
         options: >-
           --health-cmd "curl --fail --request GET --url http://localhost:8080/healthz || exit 1"
           --health-interval 10s
@@ -36,9 +36,9 @@ jobs:
         with:
           name: feldera-test-binaries-x86_64-unknown-linux-gnu
           path: build
-          run-id: 14249727439
+          #run-id: 14249727439
           # Token is only needed when run-id is set
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          #github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Remove if https://github.com/actions/upload-artifact/issues/38 ever gets fixed
       - name: Make binaries executable
