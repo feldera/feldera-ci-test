@@ -5,10 +5,6 @@ on:
   workflow_call:
   workflow_dispatch:
 
-env:
-  RUSTC_WRAPPER: sccache
-  SCCACHE_DIR: /sccache
-  SCCACHE_CACHE_SIZE: 1024G
 
 jobs:
   manager-tests:
@@ -29,6 +25,10 @@ jobs:
           --health-retries 5
         volumes:
           - "/sccache:/sccache"
+        env:
+          RUSTC_WRAPPER: sccache
+          SCCACHE_DIR: /sccache
+          SCCACHE_CACHE_SIZE: 1024G
 
     steps:
       - name: Download Test Binaries
