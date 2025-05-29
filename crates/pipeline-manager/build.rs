@@ -1,5 +1,5 @@
 use change_detection::ChangeDetection;
-use static_files::{resource_dir, NpmBuild};
+use static_files::{NpmBuild, resource_dir};
 use std::env;
 use std::path::{Path, PathBuf};
 
@@ -50,7 +50,11 @@ fn main() {
         let rel_build_dir = out_dir_parts[out_dir_parts.len() - 2..]
             .iter()
             .collect::<PathBuf>();
-        env::set_var("BUILD_DIR", rel_build_dir.clone());
+
+        // This should be safe because the build-script is single-threaded
+        unsafe {
+            env::set_var("BUILD_DIR", rel_build_dir.clone());
+        }
         let asset_path: PathBuf = Path::new("../../web-console/").join(rel_build_dir);
         let mut resource_dir = NpmBuild::new("../../web-console")
             .executable("bun")
