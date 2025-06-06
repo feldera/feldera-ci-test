@@ -17,6 +17,11 @@ jobs:
     name: ""
     uses: ./.github/workflows/publish-crates.yml
     secrets: inherit
+  publish-docs:
+    name: ""
+    uses: ./.github/workflows/publish-docs.yml
+    secrets: inherit
+
   adjust-versions:
     runs-on: [self-hosted, skylake40]
     container:
