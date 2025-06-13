@@ -5,8 +5,8 @@ on:
     inputs:
       sha:
         description: "SHA to release (a recent commit from main that hasn't been released yet)"
-  schedule:
-    - cron: "0 8 * * *" # Runs at 00:00 PT (08:00 UTC) daily
+  #schedule:
+  #  - cron: "0 8 * * *" # Runs at 00:00 PT (08:00 UTC) daily
 
 env:
   REGISTRY: ghcr.io
